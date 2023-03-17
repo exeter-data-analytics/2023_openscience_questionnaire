@@ -66,6 +66,7 @@ label_wrap_mod <- function (x, width){
 # set colours: see them, here https://brand.exeter.ac.uk/colour/
 cols <- BrewerUoE::uoe_colours(c('Exeter Bright Green', 'Exeter Deep Green', 'Exeter Night Green', 'Morning Sky', 'Deep Sea'))
 names(cols) <- rev(c('Not at all likely', 'Not very likely', "I don't know", 'Likely', "Very likely"))
+cols[3] <- 'white'
 
 # grab columns out and wrangle
 d_temp <- select(d, 27:37) %>%
