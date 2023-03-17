@@ -5,7 +5,7 @@
 #----------#
 
 # load in packages
-librarian::shelf(tidyverse, likert, scales, padpadpadpad/BrewerUoE, showtext)
+librarian::shelf(tidyverse, likert, scales, padpadpadpad/BrewerUoE, showtext, tm, wordcloud, SnowballC)
 
 # load in the dataset to begin with ####
 d <- read_csv('data/reproducible_science_questionnaire_2023.csv')
@@ -130,3 +130,77 @@ ggplot(stage_two, aes(fill = score_fac)) +
 
 ggsave('plots/what_measures_would_work.pdf', width = 12, height = 8, device = cairo_pdf)
 ggsave('plots/what_measures_would_work.png', width = 12, height = 8, type = 'cairo')
+
+#--------------------------------------------------------------------#
+# second question to plot : What does reproducibility mean to you ####
+#--------------------------------------------------------------------#
+
+# grab correct column
+d_temp <- select(d, 8) %>%
+  pull(1) %>%
+  # make it one continuous vector
+  paste0()
+
+# do some wrangling
+# make corpus
+d_temp <- VCorpus(VectorSource(d_temp))
+# Strip unnecessary whitespace
+d_temp <- tm_map(d_temp, stripWhitespace)
+# Convert to lowercase
+d_temp <- tm_map(d_temp, tolower)
+# Remove conjunctions etc.
+d_temp <- tm_map(d_temp, removeWords, stopwords("english"))
+# Remove commas etc.
+d_temp <- tm_map(d_temp, removePunctuation)
+d_temp <- tm_map(d_temp, PlainTextDocument)
+
+# make wordcloud
+png(filename='plots/reproducible_wordcloud.png', height = 4, width = 4, units = 'in', res = 300)
+
+wordcloud(d_temp,
+          scale=c(2,0.5),
+          max.words=100,      # Set top n words
+          random.order=FALSE, # Words in decreasing freq
+          rot.per=0.1,      # % of vertical words
+          use.r.layout=FALSE, # Use C++ collision detection
+          colors=BrewerUoE::uoe_colours()[1:5],
+          random.color = TRUE)
+
+dev.off()
+
+#--------------------------------------------------------------------#
+# second question to plot : What does Open Science mean to you ####
+#--------------------------------------------------------------------#
+
+# grab correct column
+d_temp <- select(d, 10) %>%
+  pull(1) %>%
+  # make it one continuous vector
+  paste0()
+
+# do some wrangling
+# make corpus
+d_temp <- VCorpus(VectorSource(d_temp))
+# Strip unnecessary whitespace
+d_temp <- tm_map(d_temp, stripWhitespace)
+# Convert to lowercase
+d_temp <- tm_map(d_temp, tolower)
+# Remove conjunctions etc.
+d_temp <- tm_map(d_temp, removeWords, stopwords("english"))
+# Remove commas etc.
+d_temp <- tm_map(d_temp, removePunctuation)
+d_temp <- tm_map(d_temp, PlainTextDocument)
+
+# make wordcloud
+png(filename='plots/openscience_wordcloud.png', height = 4, width = 4, units = 'in', res = 300)
+
+wordcloud(d_temp,
+          scale=c(2,0.5),
+          max.words=100,      # Set top n words
+          random.order=FALSE, # Words in decreasing freq
+          rot.per=0.1,      # % of vertical words
+          use.r.layout=FALSE, # Use C++ collision detection
+          colors=BrewerUoE::uoe_colours()[1:5],
+          random.color = TRUE)
+
+dev.off()
