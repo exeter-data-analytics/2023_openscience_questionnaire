@@ -5,7 +5,7 @@
 #----------#
 
 # load in packages
-librarian::shelf(tidyverse, likert, scales, padpadpadpad/BrewerUoE, showtext, tm, wordcloud, SnowballC)
+librarian::shelf(tidyverse, likert, scales, padpadpadpad/BrewerUoE, showtext, tm, wordcloud)
 
 # load in the dataset to begin with ####
 d <- read_csv('data/reproducible_science_questionnaire_2023.csv')
@@ -126,7 +126,7 @@ ggplot(stage_two, aes(fill = score_fac)) +
   labs(title = 'How likely do you think the following measures would be in improving the reproducibility of research?',
        y = 'Measure',
        x = '% Respondents',
-       caption = 'Data is comprised of 96 respondents')
+       caption = 'Data is comprised of 96 respondents\nNote: values <5% are not labelled')
 
 ggsave('plots/what_measures_would_work.pdf', width = 12, height = 8, device = cairo_pdf)
 ggsave('plots/what_measures_would_work.png', width = 12, height = 8, type = 'cairo')
@@ -204,3 +204,93 @@ wordcloud(d_temp,
           random.color = TRUE)
 
 dev.off()
+
+#--------------------------------------------------------------------------------------#
+# fourth question to plot : How familiar are you with open and reproducible science ####
+#--------------------------------------------------------------------------------------#
+
+colnames(d)
+
+# grab columns and wrangle
+d_temp <- select(d, c(7, 9)) %>%
+  rownames_to_column(var = 'id') %>%
+  pivot_longer(-id, names_to = 'type', values_to = 'score') %>%
+  filter(!is.na(score)) %>%
+  mutate(type2 = ifelse(str_detect(type, 'Repro'), 'Reproducible Science', 'Open Science'),
+         score_fac = factor(score, levels = c('Not at all familiar', 'Not very familiar', 'Somewhat familiar', 'Fairly familiar', 'Very familiar'))) %>%
+  group_by(type, type2, score_fac, score) %>%
+  tally() %>%
+  group_by(type2) %>%
+  mutate(percent = round(n/sum(n)*100, 0),
+         label = paste(percent, '%', sep = ''),
+         label = ifelse(percent < 5, '', label))
+
+names(cols) <- rev(c('Not at all familiar', 'Not very familiar', 'Somewhat familiar', 'Fairly familiar', 'Very familiar'))
+
+# make plot
+ggplot(d_temp, aes(score_fac, n, fill = score_fac)) +
+  geom_col(col = 'grey', show.legend = FALSE) +
+  facet_wrap(~type2) +
+  geom_text(aes(label = label, y = n - 2, !!!autocontrast),  size = MicrobioUoE::pts(11), family = 'Outfit') +
+  theme_bw(base_size = 14, base_family = 'Outfit') +
+  theme(axis.title.x = element_blank(),
+        panel.grid = element_blank()) +
+  scale_x_discrete(labels = label_wrap(10)) +
+  scale_fill_manual(values = cols) +
+  labs(title = 'How familiar are you with the following terms?',
+       x = '',
+       y = 'Number of respondents', 
+       caption = 'Data is comprised of 96 respondents\nNote: values <5% are not labelled') +
+  ylim(c(0,45))
+
+ggsave('plots/how_familiar_open_reproducible_science.png', width = 10, height = 5, type = 'cairo')
+
+#------------------------------------------------------------------------------#
+# fifth question to plot : How often do you think about the reproducibility ####
+#------------------------------------------------------------------------------#
+
+# Q14. How often do you think about reproducibility of your research?
+# Q15. How often do you speak to your colleagues about reproducibility?
+# Q16. How often do you question the reproducibility of other scientists' work?
+
+colnames(d)
+
+# grab columns and wrangle
+d_temp <- select(d, c(13:15)) %>%
+  rownames_to_column(var = 'id') %>%
+  pivot_longer(-id, names_to = 'question', values_to = 'score') %>%
+  filter(!is.na(score)) %>%
+  mutate(question2 = gsub('How often do you ', '...', question),
+         question2 = gsub('\n', '', question2),
+         question2 = label_wrap_mod(question2, 30),
+         score_fac = factor(score, levels = c('Never', 'Yearly', 'Monthly', 'Weekly', 'Daily'))) %>%
+  group_by(question, question2, score_fac, score) %>%
+  tally() %>%
+  group_by(question2) %>%
+  mutate(percent = round(n/sum(n)*100, 0),
+         label = paste(percent, '%', sep = ''),
+         label = ifelse(percent < 5, '', label))
+
+names(cols) <- rev(c('Never', 'Yearly', 'Monthly', 'Weekly', 'Daily'))
+
+facet_order <- rev(unique(d_temp$question2))
+
+# make plot
+ggplot(d_temp, aes(score_fac, n, fill = score_fac)) +
+  geom_col(col = 'grey', show.legend = FALSE) +
+  geom_text(aes(label = label, y = n - 2, !!!autocontrast),  size = MicrobioUoE::pts(11), family = 'Outfit') +
+  theme_bw(base_size = 14, base_family = 'Outfit') +
+  theme(axis.title.x = element_blank(),
+        panel.grid = element_blank()) +
+  scale_x_discrete(labels = label_wrap(10)) +
+  scale_fill_manual(values = cols) +
+  labs(title = 'How often do you...',
+       x = '',
+       y = 'Number of respondents', 
+       caption = 'Data is comprised of 96 respondents\nNote: values <5% are not labelled') +
+  facet_wrap(~fct_relevel(question2, facet_order)) +
+  NULL
+
+ggsave('plots/how_often_think_about_reproducibility.png', width = 12, height = 5, type = 'cairo')
+
+  
