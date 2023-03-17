@@ -169,7 +169,7 @@ wordcloud(d_temp,
 dev.off()
 
 #--------------------------------------------------------------------#
-# second question to plot : What does Open Science mean to you ####
+# third question to plot : What does Open Science mean to you ####
 #--------------------------------------------------------------------#
 
 # grab correct column
