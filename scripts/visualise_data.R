@@ -20,6 +20,7 @@ colnames(d)
 
 # check what fonts are available
 showtext_auto()
+showtext::showtext_opts(dpi = 300)
 sysfonts::font_families()
 
 # add Exeter font
@@ -127,4 +128,4 @@ ggplot(stage_two, aes(fill = score_fac)) +
        caption = 'Data is comprised of 96 respondents')
 
 ggsave('plots/what_measures_would_work.pdf', width = 12, height = 8, device = cairo_pdf)
- 
+ggsave('plots/what_measures_would_work.png', width = 12, height = 8, type = 'cairo')
